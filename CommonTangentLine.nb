@@ -1,0 +1,60 @@
+(*FCC coefficients*)
+k1 = 0.00036767;(*constant term*)
+k2 = 0.30512; (*x term*)
+k3 = -0.47768; (*x^2 term*)
+k4 = 0.1734;(*x^3 term*)
+(*BCC coefficients*)
+k5 = -0.00054553;(*constant term*)
+k6 = 0.28089;(*x term*)
+k7 = -0.45156;(*x^2 term*)
+k8 = 0.17834;(*x^3*)
+(*List of desired temperatures*)
+T = {0, 100, 200, 250, 300, 500};
+(*Desired domain of the plot*)
+xmin = 0;
+xmax = 1;
+(*Initialize a list of plots at different temperatures*)
+Tplots = {};
+(*Loop over the desired temperatures*)
+For[j = 1, j <= Length[T], j++,
+  (*Add a space for visual ease*)
+  Print[];
+  (*Print the current temperature*)
+  Print["Temperature = ", T[[j]]];
+  (*FCC curve*)
+  f[x_] := k4*x^3 + k3*x^2 + k2*x + k1 + 
+    T[[j]]*(8.617*10^(-5))*(x*Log[x] + (1 - x)*Log[1 - x]);
+  (*BCC curve*)
+  g[x_] := k8*x^3 + k7*x^2 + k6*x + k5 + 
+    T[[j]]*(8.617*10^(-5))*(x*Log[x] + (1 - x)*Log[1 - x]);
+  (*Initialize a list of plots with the two curves*)
+  fplot = Plot[f[x], {x, xmin, xmax}, PlotStyle -> Blue, PlotLabel -> T[[j]]];
+  gplot = Plot[g[x], {x, xmin, xmax}, PlotStyle -> Red];
+  plots = {fplot, gplot};
+  (*Find intersections of the two curves and change the format*)
+  zeros = Solve[{f[c] == g[c], 0 <= c <= 1}, c, Reals];
+  z = c /. zeros;
+  (*Loop over intersections*)
+  For[i = 1, i <= Length[z], i++,
+   (*Find common tangency points near each intersection*)
+   sol = FindRoot[{f'[a] == g'[b], f'[a] == (f[a] - g[b])/(a - b)}, {{a, z[[i]] + .01}, {b, z[[1]] - .01}}];
+   (*Change the format of the solution*)
+   u = a /. sol;
+   v = b /. sol;
+   (*The tangent line that passes through u and v*)
+   h[x_] := f'[u]*(x - u) + f[u];
+   (*Add a plot of each tangent line to a list of plots*)
+   plots = AppendTo[plots, Plot[h[x], {x, xmin, xmax}, PlotStyle -> Green]];
+   (*Print each tangency point in the form {x,y}*)
+   Print["Common Tangency Point ", i, " on FCC curve: ", {u, f[u]}];
+   Print["Common Tangency Point ", i, " on BCC curve: ", {v, g[v]}];
+   (*Check if the slopes are actually equal*)
+   Print[f'[u] == g'[v]];
+   ];
+  (*Combine all plots at a single temperature into one plot*)
+  TPlots = Show[plots, PlotRange -> Automatic];
+  (*Make a list of plots at different temperatures*)
+  AllPlots = AppendTo[Tplots, TPlots];
+  ];
+(*Display a list of all plots*) 
+AllPlots
